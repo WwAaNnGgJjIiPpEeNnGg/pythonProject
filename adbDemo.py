@@ -1,5 +1,6 @@
 import os
 import subprocess
+import shutil
 
 
 # 显示设备详情信息
@@ -57,10 +58,21 @@ def push_file(device, local_file_path, remote_file_path):
 
 
 # 将文件从手机端拉取到电脑端
-def pull_file(device, phone_file_path, pc_file_oath):
-    subprocess.run((["adb", "-s", device, "pull", phone_file_path, pc_file_oath]))
-    # command = "{adb} {-s} pull".format(device, phone_file_path, pc_file_oath)
-    # os.system(command)
+# def pull_file(device, phone_file_path, pc_file_path):
+# subprocess.run((["adb", "-s", device, "pull", phone_file_path, pc_file_path]))
+# command = "{adb} {-s} pull".format(device, phone_file_path, pc_file_path)
+# command = f'adb -s {device} pull {phone_file_path} {pc_file_path}'
+# os.system(command)
+def pull_file(device, phone_file_path, pc_file_path):
+    # 使用subprocess模块执行pull命令
+    cmd = f"adb -s {device} pull {phone_file_path} {pc_file_path}"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+
+    if result.returncode == 0:
+        print(f"{phone_file_path}已成功复制到{pc_file_path}！")
+    else:
+        print("拉取文件失败！请检查文件路径！")
+        print(result.stderr)
 
 
 # 拉取手机端日志
@@ -77,7 +89,7 @@ def main():
     choice = input('请选择设备编号：')
     if not choice:
         print("请确认设备编号！")
-    device = devices[int(choice)-1]
+    device = devices[int(choice) - 1]
 
     print(f'已选择设备：{device}')
     while True:
@@ -129,16 +141,14 @@ def main():
             remote_file_path = "/sdcard/" + os.path.basename(local_file_path)
             push_file(device, local_file_path, remote_file_path)
             print(f"已将文件推送到设备 {device} /sdcard 目录下 ")
-        # elif choice == '7':
-        #     # 获取手机文件路径
-        #     phone_file_path = input("请输入手机文件路径：")
-        #     if not os.path.exists(phone_file_path):
-        #         print("文件不存在")
-        #         return
-        #         # 拉取文件到PC端
-        #     pc_file_path = "/D:" + os.path.basename(phone_file_path)
-        #     pull_file(device, phone_file_path, pc_file_path)
-        #     print(f"已将文件拉取到到Pc")
+        elif choice == '7':
+            # 获取手机文件路径
+            # 获取源文件路径和目标文件路径
+            phone_file_path = input("请输入要拉取的文件路径（例如：/sdcard/test.txt）：")
+            pc_file_path = input("请输入文件保存路径和文件名（例如：D:/test.txt）：")
+
+            # 调用pull_file函数，使用pull命令将手机端文件复制到PC端
+            pull_file(device, phone_file_path, pc_file_path)
         elif choice == '8':
             break
         else:
