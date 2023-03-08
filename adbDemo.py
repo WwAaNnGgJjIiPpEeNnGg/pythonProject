@@ -65,11 +65,11 @@ def push_file(device, local_file_path, remote_file_path):
 # os.system(command)
 def pull_file(device, phone_file_path, pc_file_path):
     # 使用subprocess模块执行pull命令
-    cmd = f"adb -s {device} pull {phone_file_path} {pc_file_path}"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    command = f"adb -s {device} pull {phone_file_path} {pc_file_path}"
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
 
     if result.returncode == 0:
-        print(f"{phone_file_path}已成功复制到{pc_file_path}！")
+        print(f"{phone_file_path}已成功复制到{pc_file_path}文件夹下 ！！")
     else:
         print("拉取文件失败！请检查文件路径！")
         print(result.stderr)
@@ -86,7 +86,11 @@ def main():
     print('可用设备：')
     for i, device in enumerate(devices):
         print(f'{i + 1}. {device}')
-    choice = input('请选择设备编号：')
+        if device == 'MKSBB19314208768':
+            print(device+'\t华为：Honor 8c')
+        if device == 'KXU0221301006068':
+            print(device+'\t华为：P40')
+            choice = input('请选择设备编号：')
     if not choice:
         print("请确认设备编号！")
     device = devices[int(choice) - 1]
