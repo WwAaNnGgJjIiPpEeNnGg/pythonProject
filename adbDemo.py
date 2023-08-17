@@ -1,6 +1,7 @@
 import os
 import subprocess
-import shutil
+from tqdm import tqdm
+import sys
 
 
 # 显示设备详情信息
@@ -12,6 +13,22 @@ def dumpsys_battery(device):
 # 安装apk文件  -r 覆盖安装
 def install_apk(device, apk_file):
     command = f'adb -s {device} install -r {apk_file}'
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+    with tqdm(total=100, unit='%', ncols=60) as pbar:
+        for line in process.stdout:
+            # 假设adb命令会打印出百分比的安装进度
+            output = line.decode().strip()
+            if output.startswith('Success'):
+                pbar.update(100)  # 安装成功，进度条到达100%
+            elif output.startswith('Failure'):
+                # 安装失败，根据需要进行处理
+                pbar.close()
+                print("安装失败")
+                break
+            elif output.startswith('Installing'):
+                progress = float(output.split()[1].strip('%'))
+                pbar.update(progress - pbar.n)  # 更新进度条
+
     os.system(command)
 
 
@@ -76,7 +93,38 @@ def pull_file(device, phone_file_path, pc_file_path):
 
 
 # 拉取手机端日志
-# def get_phonelogs(device,logcat):
+# def get_logs(device,logcat):
+# 使用subprocess模块执行adb logcat命令
+def run_adb_logcat():
+    process = subprocess.Popen(['adb', 'logcat'], stdout=subprocess.PIPE)
+
+    try:
+        while True:
+            # 检查进程是否已经结束
+            if process.poll() is not None:
+                break
+
+            # 逐行读取输出
+            line = process.stdout.readline()
+            if not line:
+                break
+            # 解码并打印输出，忽略解码错误
+            print(line.decode('utf-8', errors='ignore').strip())
+    except KeyboardInterrupt:
+        # 捕获键盘中断异常
+        print("KeyboardInterrupt: Stopping adb logcat...")
+
+    # 等待进程结束
+    process.wait()
+
+
+# 获取设备分辨率
+def wm_size(device):
+    # 执行 adb shell wm size
+    command = f"adb -s {device} shell wm size"
+    os.system(command)
+
+
 # 主程序
 def main():
     devices = list_devices()
@@ -87,10 +135,12 @@ def main():
     for i, device in enumerate(devices):
         print(f'{i + 1}. {device}')
         if device == 'MKSBB19314208768':
-            print(device+'\t华为：Honor 8c')
+            print(device + '\t华为：Honor 8c')
         if device == 'KXU0221301006068':
-            print(device+'\t华为：P40')
-            choice = input('请选择设备编号：')
+            print(device + '\t华为：P40')
+        if device == '2480e012':
+            print(device + '\tvivo：Y85a')
+    choice = input('请选择设备编号：')
     if not choice:
         print("请确认设备编号！")
     device = devices[int(choice) - 1]
@@ -103,9 +153,11 @@ def main():
         print('3. 卸载应用程序')
         print('4. 显示全部已安装应用程序列表')
         print('5. 显示已安装的第三方应用程序')
-        print('6. 推送文件到手机端 /sdcard')
+        print('6. 推送backdoor.txt文件到手机端 ')
         print('7. 拉取手机端文件到Pc')
-        print('8. 退出')
+        print('8. 查看当前设备分辨率：')
+        print('9. 拉取日志')
+        print('10. 退出')
         # try:
         #     choice = input()
         # except KeyboardInterrupt:
@@ -137,14 +189,26 @@ def main():
                     print(f'{i + 1}. {package}')
         elif choice == '6':
             # 获取本地文件路径
-            local_file_path = input("请输入本地文件路径：")
+            local_file_path = input("请输入本地文件路径 例如：请输入本地文件路径 例如：C:\\Users\\wangjipeng\\Desktop\\backdoor.txt")
             if not os.path.exists(local_file_path):
                 print("文件不存在")
                 return
-                # 推送文件到设备
-            remote_file_path = "/sdcard/" + os.path.basename(local_file_path)
+                # 获取设备路径
+            remote_file_path = input("请输入设备路径 例如：/sdcard/Android/data/com.wondergames.warpath.gp/files")
+            if not remote_file_path.startswith("/"):
+                remote_file_path = "/" + remote_file_path
+
+                # 拼接完整的设备路径
+            remote_file_path = remote_file_path + "/" + os.path.basename(local_file_path)
+
+            # 推送文件到设备
             push_file(device, local_file_path, remote_file_path)
-            print(f"已将文件推送到设备 {device} /sdcard 目录下 ")
+            print(f"已将文件推送到设备 {device} {remote_file_path} 目录下 ")
+
+            # 推送文件到设备
+        # remote_file_path = "/sdcard/" + os.path.basename(local_file_path)
+        # push_file(device, local_file_path, remote_file_path)
+        # print(f"已将文件推送到设备 {device} /sdcard 目录下 ")
         elif choice == '7':
             # 获取手机文件路径
             # 获取源文件路径和目标文件路径
@@ -153,7 +217,15 @@ def main():
 
             # 调用pull_file函数，使用pull命令将手机端文件复制到PC端
             pull_file(device, phone_file_path, pc_file_path)
+
         elif choice == '8':
+            # 获取设备分辨率并输出
+            print("当前设备分辨率为：")
+            wm_size(device)
+        elif choice == '9':
+            # 调用函数执行adb logcat
+            run_adb_logcat()
+        elif choice == '10':
             break
         else:
             print('无效选择，请重新输入。')

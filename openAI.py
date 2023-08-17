@@ -1,15 +1,17 @@
-import os
 import openai
+import os
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# 设置API密钥
 
+openai.api_key = os.environ["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"]
+
+# 调用API生成文本
 response = openai.Completion.create(
-  model="text-davinci-003",
-  prompt="You: What have you been up to?\nFriend: Watching old movies.\nYou: Did you watch anything interesting?\nFriend:",
-  temperature=0.5,
-  max_tokens=60,
-  top_p=1.0,
-  frequency_penalty=0.5,
-  presence_penalty=0.0,
-  stop=["You:"]
+  engine="davinci",
+  prompt="Hello, my name is",
+  max_tokens=5
 )
+# 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
+# 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
+# 输出生成的文本
+print(response.choices[0].text)

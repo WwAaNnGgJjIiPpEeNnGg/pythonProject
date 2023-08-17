@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Slider Captcha</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="captcha-container">
+        <div class="captcha-image">
+            <img id="captcha-image" src="{{ captcha_image }}" alt="Captcha Image">
+        </div>
+        <div class="captcha-slider">
+            <div id="slider"></div>
+        </div>
+        <button id="submit-button">Submit</button>
+    </div>
+    <script src="{{ url_for('static', filename='captcha.js') }}"></script>
+</body>
+</html>
